@@ -1,0 +1,151 @@
+﻿@page "/registro-productos"
+@rendermode InteractiveServer
+<h3>Registro de productos</h3>
+
+@* Validación: Mostrar error si se repite el número de inventario *@
+@if (mostrarError)
+{
+    <div class="alert alert-danger">El número de inventario ya existe. Ingresa uno diferente.</div>
+}
+
+@* Interfaz de usuario: Formulario de captura *@
+<div class="mb-3 mt-3">
+    <label class="text-muted">No. de inventario</label>
+    <input type="number" class="form-control mb-3" style="max-width: 200px;" @bind="numeroInventario" />
+
+    <label class="text-muted">Descripción</label>
+    <input type="text" class="form-control mb-3" placeholder="Escribe la descripción del producto" @bind="descripcion" />
+
+    <label class="text-muted d-block">Departamento</label>
+    <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="departamento" checked="@(departamento == "Frutas")" @onchange="@(() => departamento = "Frutas")">
+        <label class="form-check-label">Frutas</label>
+    </div>
+    <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="departamento" checked="@(departamento == "Verduras")" @onchange="@(() => departamento = "Verduras")">
+        <label class="form-check-label">Verduras</label>
+    </div>
+    <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="departamento" checked="@(departamento == "Lácteos")" @onchange="@(() => departamento = "Lácteos")">
+        <label class="form-check-label">Lácteos</label>
+    </div>
+</div>
+
+@* Interfaz de usuario: Botones verdes solicitados *@
+<div class="mb-4">
+    <button class="btn btn-success me-2" @onclick="GuardarDatos">Guardar datos</button>
+    <button class="btn btn-success me-2" @onclick="MostrarListaCompleta">Lista completa</button>
+    <button class="btn btn-success me-2" @onclick="@(() => FiltrarPorDepartamento("Frutas"))">Lista de frutas</button>
+    <button class="btn btn-success me-2" @onclick="@(() => FiltrarPorDepartamento("Verduras"))">Lista de verduras</button>
+    <button class="btn btn-success" @onclick="@(() => FiltrarPorDepartamento("Lácteos"))">Lista de lácteos</button>
+</div>
+
+@* Tabla dinámica para mostrar los productos *@
+@if (mostrarLista)
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>No. Inventario</th>
+                <th>Descripción</th>
+                <th>Departamento</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var producto in listaAMostrar)
+            {
+                <tr>
+                    <td>@producto.NumeroInventario</td>
+                    <td>@producto.Descripcion</td>
+                    <td>@producto.Departamento</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @* Botón para quitar el listado *@
+    <button class="btn btn-success mt-2" @onclick="CerrarLista">Cerrar lista</button>
+}
+
+@code {
+    // Variables de los campos
+    private int numeroInventario = 0;
+    private string descripcion = "";
+    private string departamento = "Frutas";
+
+    // Variables de control de pantalla
+    private bool mostrarError = false;
+    private bool mostrarLista = false;
+
+    // Almacenamiento en memoria
+    private List<Producto> inventarioGeneral = new List<Producto>();
+    private List<Producto> listaAMostrar = new List<Producto>();
+
+    // Funcionalidad: Botón Guardar datos
+    private void GuardarDatos()
+    {
+        mostrarError = false;
+
+        // Validar que el número de inventario no se repita
+        foreach (var prod in inventarioGeneral)
+        {
+            if (prod.NumeroInventario == numeroInventario)
+            {
+                mostrarError = true;
+                return; // Detiene el guardado
+            }
+        }
+
+        // Si es único, crea el producto y lo almacena en memoria
+        Producto nuevoProducto = new Producto();
+        nuevoProducto.NumeroInventario = numeroInventario;
+        nuevoProducto.Descripcion = descripcion;
+        nuevoProducto.Departamento = departamento;
+
+        inventarioGeneral.Add(nuevoProducto);
+
+        // Limpiar los campos para capturar otro producto
+        numeroInventario = 0;
+        descripcion = "";
+        departamento = "Frutas";
+    }
+
+    // Funcionalidad: Botón Lista completa
+    private void MostrarListaCompleta()
+    {
+        listaAMostrar.Clear();
+        foreach (var prod in inventarioGeneral)
+        {
+            listaAMostrar.Add(prod);
+        }
+        mostrarLista = true;
+    }
+
+    // Funcionalidad: Botones de listas por departamento
+    private void FiltrarPorDepartamento(string deptoFiltro)
+    {
+        listaAMostrar.Clear();
+        foreach (var prod in inventarioGeneral)
+        {
+            if (prod.Departamento == deptoFiltro)
+            {
+                listaAMostrar.Add(prod);
+            }
+        }
+        mostrarLista = true;
+    }
+
+    // Funcionalidad: Botón Cerrar lista
+    private void CerrarLista()
+    {
+        mostrarLista = false; // Quita el listado de productos
+    }
+
+    // Estructura del producto en memoria
+    public class Producto
+    {
+        public int NumeroInventario { get; set; }
+        public string Descripcion { get; set; }
+        public string Departamento { get; set; }
+    }
+}
